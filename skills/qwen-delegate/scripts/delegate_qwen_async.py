@@ -528,6 +528,7 @@ def run_worker(spec_path: Path) -> int:
         "session_id": final_result.get("session_id"),
         "session_cleanup": session_cleanup,
         "cli_exit_code": final_result.get("cli_exit_code"),
+        "child_usage": final_result.get("usage"),
     }
     atomic_write_json(job_dir / "summary.json", summary)
     exit_payload = {

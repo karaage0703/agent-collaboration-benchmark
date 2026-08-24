@@ -376,7 +376,13 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                 calls.append(command)
                 if command == ["delegate-command"]:
                     (job_dir / "attempt-01-result.json").write_text(
-                        json.dumps({"session_id": "s1", "cli_exit_code": 0}),
+                        json.dumps(
+                            {
+                                "session_id": "s1",
+                                "cli_exit_code": 0,
+                                "usage": {"input_tokens": 12, "output_tokens": 3},
+                            }
+                        ),
                         encoding="utf-8",
                     )
                     return __import__("subprocess").CompletedProcess(command, 0, "", "")
@@ -425,6 +431,10 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                     "status"
                 ],
                 "closed",
+            )
+            self.assertEqual(
+                json.loads((job_dir / "summary.json").read_text())["child_usage"],
+                {"input_tokens": 12, "output_tokens": 3},
             )
 
     def test_worker_triggers_after_delegate_failure(self):

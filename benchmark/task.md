@@ -1,4 +1,4 @@
-# Benchmark task: build Collab Tasks
+# Benchmark task: build Agent Mission Control
 
 Implement the complete application described in `specs/sample-app.md`.
 

@@ -1,7 +1,7 @@
 {
   "commands": [
-    ["node", "--test", "benchmark/gates/task-store.acceptance.mjs"],
-    ["node", "--test", "test/task-store.test.js"],
+    ["node", "--test", "benchmark/gates/board-store.acceptance.mjs"],
+    ["node", "--test", "test/board-store.test.js"],
     ["npm", "test"],
     ["npm", "run", "check"],
     ["git", "diff", "--check"]
@@ -9,9 +9,9 @@
   "allowed_changes": [
     "index.html",
     "styles.css",
-    "src/task-store.js",
+    "src/board-store.js",
     "src/app.js",
-    "test/task-store.test.js"
+    "test/board-store.test.js"
   ],
   "ignored_changes": ["logs/"],
   "timeout_seconds": 300

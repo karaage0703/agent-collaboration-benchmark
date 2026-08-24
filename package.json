@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test benchmark/gates/task-store.acceptance.mjs test/task-store.test.js",
-    "check": "node --check src/task-store.js && node --check src/app.js"
+    "test": "node --test benchmark/gates/board-store.acceptance.mjs test/board-store.test.js",
+    "check": "node --check src/board-store.js && node --check src/app.js"
   }
 }

@@ -1,65 +1,74 @@
-# Collab Tasks specification
+# Agent Mission Control specification
 
-Collab Tasks is a dependency-free browser task board. It must work when `index.html` is served by a basic static HTTP server.
+Agent Mission Control is a dependency-free browser kanban board for coordinating work between GPT Sol, Qwen, and a human reviewer. It must work when `index.html` is served by a basic static HTTP server.
 
 ## Required files
 
 - `index.html`
 - `styles.css`
-- `src/task-store.js`
+- `src/board-store.js`
 - `src/app.js`
-- `test/task-store.test.js`
+- `test/board-store.test.js`
 
 ## Task model
 
-Each task has this shape:
+Each mission card has this shape:
 
 ```js
 {
-  id: "task-1",
-  title: "Write the benchmark",
-  completed: false,
+  id: "mission-1",
+  title: "Build the benchmark",
+  status: "backlog",
+  assignee: "qwen",
+  priority: "high",
   createdAt: 1720000000000
 }
 ```
 
 ## Public store API
 
-`src/task-store.js` must export these named functions:
+`src/board-store.js` must export these named functions:
 
-- `createTask(title, options?)`
-- `addTask(tasks, title, options?)`
-- `toggleTask(tasks, id)`
-- `renameTask(tasks, id, title)`
-- `removeTask(tasks, id)`
-- `clearCompleted(tasks)`
-- `filterTasks(tasks, filter)`
-- `summarizeTasks(tasks)`
-- `serializeTasks(tasks)`
-- `parseTasks(json)`
+- `createCard(title, options?)`
+- `addCard(cards, title, options?)`
+- `moveCard(cards, id, status)`
+- `renameCard(cards, id, title)`
+- `assignCard(cards, id, assignee)`
+- `setPriority(cards, id, priority)`
+- `removeCard(cards, id)`
+- `groupCards(cards)`
+- `summarizeBoard(cards)`
+- `serializeBoard(cards)`
+- `parseBoard(json)`
 
 Rules:
 
 - All operations are pure: never mutate the input array or task objects.
 - Titles are trimmed. Empty or whitespace-only titles are rejected with `TypeError`.
-- `createTask` accepts optional deterministic `{ id, now }` values. Without them it may generate values.
+- `createCard` accepts optional deterministic `{ id, now, status, assignee, priority }` values. Without them it may generate `id` and `now`; the other defaults are `backlog`, `human`, and `medium`.
 - Unknown IDs leave the list unchanged by value while still returning a new array.
-- Filters are `all`, `active`, and `completed`; an unknown filter behaves as `all`.
-- `summarizeTasks` returns `{ total, active, completed }`.
+- Statuses are `backlog`, `in-progress`, and `done`.
+- Assignees are `sol`, `qwen`, and `human`.
+- Priorities are `low`, `medium`, and `high`.
+- Invalid status, assignee, or priority input falls back to its default for creation and leaves an existing card unchanged for updates.
+- `groupCards` returns an object with arrays for all three statuses, preserving relative order.
+- `summarizeBoard` returns `{ total, backlog, inProgress, done, progress }`, where progress is the integer percentage of done cards and is `0` for an empty board.
 - Serialization is JSON. Parsing invalid JSON or a non-array returns `[]`.
 - Parsing drops invalid entries and normalizes valid entries without throwing.
 
 ## Browser UI
 
-The page must provide:
+The initial empty-storage view must include at least four realistic demo missions distributed across all three columns so visual quality can be judged immediately. The page must provide:
 
-- A form to add a task
-- All, Active, and Completed filters
-- Toggle, rename, and delete controls
-- A clear-completed action
-- Counts for total, active, and completed tasks
-- Persistence through `localStorage` under `collab-tasks-v1`
-- A responsive layout usable at 375 px width
-- Keyboard-accessible native controls and visible focus styles
+- Three clearly labelled columns: Backlog, In Progress, and Done
+- A compact form to add a mission with title, assignee, and priority
+- Cards showing title, assignee, priority, and movement controls
+- Rename, move, reassign, reprioritize, and delete interactions
+- Total and per-column counts plus an overall progress meter
+- Persistence through `localStorage` under `agent-mission-control-v1`
+- A modern mission-control visual language with restrained color, clear hierarchy, named CSS design tokens, and no remote fonts or assets
+- A responsive layout with no horizontal page overflow at 320, 375, 414, and 768 px; columns may stack vertically on narrow screens
+- Keyboard-accessible native controls, visible `:focus-visible` styles, and non-color-only status/priority labels
+- Clear default, hover, focus, active, error, and success feedback for relevant controls; avoid unexplained disabled actions
 
 No framework, package dependency, remote asset, build step, or network request is allowed.

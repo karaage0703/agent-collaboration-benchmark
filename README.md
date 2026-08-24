@@ -15,14 +15,15 @@ The benchmark answers three questions:
 
 ## Sample application
 
-The target is **Collab Tasks**, a small browser task board implemented with HTML, CSS, and JavaScript only. The repository initially contains its specification and independent gate, but not its implementation. See [specs/sample-app.md](specs/sample-app.md).
+The target is **Agent Mission Control**, a three-column browser kanban board implemented with HTML, CSS, and JavaScript only. It shows agent ownership, priority, progress, and responsive interaction clearly enough for a person to compare two implementations side by side. The repository initially contains its specification and independent gate, but not its implementation. See [specs/sample-app.md](specs/sample-app.md).
 
 ## Fixed benchmark
 
 - Task: [benchmark/task.md](benchmark/task.md)
 - A/B protocol: [benchmark/PROTOCOL.md](benchmark/PROTOCOL.md)
 - Gate contract: [benchmark/gate.json](benchmark/gate.json)
-- Independent acceptance test: [benchmark/gates/task-store.acceptance.mjs](benchmark/gates/task-store.acceptance.mjs)
+- Independent acceptance test: [benchmark/gates/board-store.acceptance.mjs](benchmark/gates/board-store.acceptance.mjs)
+- Human review checklist: [benchmark/HUMAN_CHECKLIST.md](benchmark/HUMAN_CHECKLIST.md)
 - Delegation skill: [skills/qwen-delegate/SKILL.md](skills/qwen-delegate/SKILL.md)
 
 Run the independent gate after an arm finishes:

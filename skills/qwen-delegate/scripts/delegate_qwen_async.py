@@ -100,6 +100,12 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Follow-up repair attempts after a failed gate (default: 1)",
     )
+    parser.add_argument(
+        "--transport-retries",
+        type=int,
+        default=1,
+        help="Fresh-session retries after a transient transport failure (default: 1)",
+    )
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument(
         "--trigger-delay",
@@ -343,6 +349,30 @@ def repair_command(
     return command
 
 
+def transient_fresh_retry_eligible(result: dict[str, Any]) -> bool:
+    """Retry only a clean Local LLM transport failure that has no resumable session."""
+    error = str(result.get("error", "")).lower()
+    return (
+        result.get("backend") == "local-llm"
+        and result.get("status") == "error"
+        and not result.get("session_id")
+        and not result.get("git_status_after")
+        and any(marker in error for marker in ("fetch failed", "connection reset", "timed out"))
+    )
+
+
+def fresh_retry_command(
+    base_command: list[str], result_file: Path, events_prefix: Path
+) -> list[str]:
+    command = list(base_command)
+    for option in ("--result-file", "--events-prefix", "--session-id"):
+        while option in command:
+            index = command.index(option)
+            del command[index : index + 2]
+    command.extend(["--result-file", str(result_file), "--events-prefix", str(events_prefix)])
+    return command
+
+
 def close_child_session(spec: dict[str, Any], session_id: str) -> dict[str, Any]:
     if spec.get("keep_session"):
         return {"status": "kept", "reason": "keep_session_requested"}
@@ -401,7 +431,9 @@ def run_worker(spec_path: Path) -> int:
     final_result: dict[str, Any] = {}
     final_gate: dict[str, Any] = {"pass": False, "reason": "not_run", "commands": []}
     completed = subprocess.CompletedProcess(command, 1)
-    max_attempts = 1 + int(spec.get("repair_attempts", 0))
+    repair_attempts_left = int(spec.get("repair_attempts", 0))
+    transport_retries_left = int(spec.get("transport_retries", 0))
+    max_attempts = 1 + repair_attempts_left + transport_retries_left
     for attempt in range(1, max_attempts + 1):
         result_path = job_dir / f"attempt-{attempt:02d}-result.json"
         stdout_path = job_dir / f"attempt-{attempt:02d}.stdout.log"
@@ -449,8 +481,17 @@ def run_worker(spec_path: Path) -> int:
         if final_gate.get("git_metadata_changes"):
             break
         session_id = final_result.get("session_id")
-        if gate_spec is None or attempt >= max_attempts or not session_id:
+        if transport_retries_left > 0 and transient_fresh_retry_eligible(final_result):
+            transport_retries_left -= 1
+            command = fresh_retry_command(
+                spec["command"],
+                job_dir / f"attempt-{attempt + 1:02d}-result.json",
+                job_dir / f"attempt-{attempt + 1:02d}.events",
+            )
+            continue
+        if gate_spec is None or attempt >= max_attempts or not session_id or repair_attempts_left <= 0:
             break
+        repair_attempts_left -= 1
         command = repair_command(
             spec["command"],
             job_dir / f"attempt-{attempt + 1:02d}-result.json",
@@ -551,6 +592,8 @@ def validate_launch_args(args: argparse.Namespace) -> None:
         raise AsyncDelegateError("trigger-delay must be zero or greater")
     if args.repair_attempts < 0:
         raise AsyncDelegateError("repair-attempts must be zero or greater")
+    if args.transport_retries < 0:
+        raise AsyncDelegateError("transport-retries must be zero or greater")
 
 
 def launch(args: argparse.Namespace) -> int:
@@ -577,6 +620,7 @@ def launch(args: argparse.Namespace) -> int:
         "source": source,
         "trigger_delay": args.trigger_delay,
         "repair_attempts": args.repair_attempts,
+        "transport_retries": args.transport_retries,
         "gate": gate,
         "git_metadata_baseline": git_metadata_snapshot(workspace),
         "backend": args.backend,

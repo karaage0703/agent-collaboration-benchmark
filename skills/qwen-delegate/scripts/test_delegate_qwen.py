@@ -125,6 +125,7 @@ class AsyncDelegateQwenTest(unittest.TestCase):
             opencode_command="/tmp/opencode",
             gate_file=None,
             repair_attempts=1,
+            transport_retries=1,
         )
         command = delegate_qwen_async.delegation_command(args, Path("/tmp/result.json"))
         self.assertEqual(command[command.index("--backend") + 1], "opencode")
@@ -273,6 +274,45 @@ class AsyncDelegateQwenTest(unittest.TestCase):
             destination = Path(directory) / "exit.json"
             delegate_qwen_async.atomic_write_json(destination, {"status": "success"})
             self.assertEqual(json.loads(destination.read_text()), {"status": "success"})
+
+    def test_transport_failure_without_changes_gets_a_fresh_retry(self):
+        result = {
+            "status": "error",
+            "backend": "local-llm",
+            "error": "fetch failed",
+            "session_id": None,
+            "git_status_after": [],
+        }
+        self.assertTrue(delegate_qwen_async.transient_fresh_retry_eligible(result))
+        command = delegate_qwen_async.fresh_retry_command(
+            [
+                "python",
+                "delegate_qwen.py",
+                "--prompt",
+                "task",
+                "--session-id",
+                "old",
+                "--result-file",
+                "/tmp/old.json",
+            ],
+            Path("/tmp/new.json"),
+            Path("/tmp/new.events"),
+        )
+        self.assertNotIn("--session-id", command)
+        self.assertEqual(command[command.index("--result-file") + 1], "/tmp/new.json")
+
+    def test_transport_retry_rejects_dirty_or_resumable_failures(self):
+        base = {"status": "error", "backend": "local-llm", "error": "fetch failed"}
+        self.assertFalse(
+            delegate_qwen_async.transient_fresh_retry_eligible(
+                {**base, "session_id": "s1", "git_status_after": []}
+            )
+        )
+        self.assertFalse(
+            delegate_qwen_async.transient_fresh_retry_eligible(
+                {**base, "session_id": None, "git_status_after": ["?? src/a.js"]}
+            )
+        )
 
     def test_close_opencode_session_uses_config_and_workspace(self):
         completed = __import__("subprocess").CompletedProcess(

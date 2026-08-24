@@ -31,6 +31,7 @@ uv run [SKILL_DIR]/scripts/delegate_qwen_async.py \
   --model qwen3.8-27b \
   --gate-file <workspace>/benchmark/gate.json \
   --repair-attempts 1 \
+  --transport-retries 1 \
   --channel <thread-id> \
   --platform discord \
   --timeout 1800
@@ -45,6 +46,8 @@ uv run [SKILL_DIR]/scripts/delegate_qwen_async.py \
 - trigger receiptが`delivered`でmessage IDを持つ
 
 gate失敗時だけjob directoryを調査する。失敗調査を測定turnへ混ぜず、そのrunを無効として原因を修正後にfresh sessionとfresh worktreeで再測定する。
+
+Local LLMの一時的なtransport errorでsessionも変更も残らなかった場合だけ、fresh sessionで1回再試行する。sessionあり・変更あり・非transport errorでは盲目的に再実行しない。
 
 ## 出力
 

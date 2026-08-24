@@ -131,7 +131,7 @@ def resolve_workspace(raw_path: str) -> Path:
 
 def git_status(workspace: Path) -> list[str] | None:
     result = subprocess.run(
-        ["git", "status", "--short"],
+        ["git", "status", "--short", "--untracked-files=all"],
         cwd=workspace,
         text=True,
         capture_output=True,

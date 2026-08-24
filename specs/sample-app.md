@@ -54,7 +54,7 @@ Rules:
 - `groupCards` returns an object with arrays for all three statuses, preserving relative order.
 - `summarizeBoard` returns `{ total, backlog, inProgress, done, progress }`, where progress is the integer percentage of done cards and is `0` for an empty board.
 - Serialization is JSON. Parsing invalid JSON or a non-array returns `[]`.
-- Parsing drops invalid entries and normalizes valid entries without throwing.
+- Parsing drops invalid entries and normalizes valid entries without throwing. Normalization trims both `id` and `title` strings.
 
 ## Browser UI
 

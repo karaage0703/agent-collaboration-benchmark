@@ -178,7 +178,10 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                 side_effect=[
                     __import__("subprocess").CompletedProcess(["test"], 0, "ok", ""),
                     __import__("subprocess").CompletedProcess(
-                        ["git", "status", "--short"], 0, "?? src/a.py\n", ""
+                        ["git", "status", "--short", "--untracked-files=all"],
+                        0,
+                        "?? src/a.py\n",
+                        "",
                     ),
                 ],
             ):
@@ -198,7 +201,7 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                 side_effect=[
                     __import__("subprocess").CompletedProcess(["test"], 0, "ok", ""),
                     __import__("subprocess").CompletedProcess(
-                        ["git", "status", "--short"],
+                        ["git", "status", "--short", "--untracked-files=all"],
                         0,
                         "?? src/a.py\n?? logs/\n",
                         "",
@@ -381,7 +384,12 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                     return __import__("subprocess").CompletedProcess(
                         command, 0, "ok", ""
                     )
-                if command[:3] == ["git", "status", "--short"]:
+                if command[:4] == [
+                    "git",
+                    "status",
+                    "--short",
+                    "--untracked-files=all",
+                ]:
                     return __import__("subprocess").CompletedProcess(
                         command, 0, "?? src/a.py\n", ""
                     )
@@ -449,7 +457,12 @@ class AsyncDelegateQwenTest(unittest.TestCase):
                     return __import__("subprocess").CompletedProcess(
                         command, 1, "", "failed"
                     )
-                if command[:3] == ["git", "status", "--short"]:
+                if command[:4] == [
+                    "git",
+                    "status",
+                    "--short",
+                    "--untracked-files=all",
+                ]:
                     return __import__("subprocess").CompletedProcess(command, 0, "", "")
                 if command[0] == "xangi":
                     return __import__("subprocess").CompletedProcess(

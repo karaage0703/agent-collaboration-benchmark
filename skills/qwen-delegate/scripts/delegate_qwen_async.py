@@ -205,7 +205,7 @@ def load_gate(path: str | None) -> dict[str, Any] | None:
 
 def changed_paths(workspace: Path) -> list[str]:
     completed = subprocess.run(
-        ["git", "status", "--short"],
+        ["git", "status", "--short", "--untracked-files=all"],
         cwd=workspace,
         text=True,
         capture_output=True,
